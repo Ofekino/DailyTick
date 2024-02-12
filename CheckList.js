@@ -1,189 +1,66 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Animated, View, TouchableOpacity, Text, Pressable, TextInput, StyleSheet, Keyboard, ActivityIndicator  } from 'react-native';
-import { Icon, Button, useTheme, SegmentedButtons } from 'react-native-paper';
-import BouncyCheckbox from "react-native-bouncy-checkbox";
-import Spacer from './Spacer';
-import { SwipeListView } from 'react-native-swipe-list-view';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React, { useState, useRef, useEffect } from 'react';
+import { Animated, StyleSheet, View, Text, TouchableOpacity, TextInput, Keyboard, ActivityIndicator } from 'react-native';
+import DraggableFlatList from 'react-native-draggable-flatlist';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import { IconButton, FAB, Modal, useTheme, Portal, Icon, Provider, Button, SegmentedButtons } from 'react-native-paper';
+import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import { IconPicker } from '@grassper/react-native-icon-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { differenceInDays } from 'date-fns';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Spacer from './Spacer';
+import DragList, {DragListRenderItemInfo} from 'react-native-draglist';
 
-
-const ListItem = ({ label, icon, taskFreq, taskDate, daysNum, index, onDelete }) => {
-
+  
+export default function CheckList() {
   const theme = useTheme();
 
 
-  state = {
-    value: 0,
-    listViewData: [{}]
-  }
 
-  const [checked, setChecked] = React.useState(false);
 
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [data, setData] = useState([
+    // { id: '1', text: 'Item 1', checked: false },
+    // { id: '2', text: 'Item 2', checked: false },
+    // { id: '3', text: 'Item 3', checked: false },
+    // Add more items as needed
+  ]);
 
-  const fadeOut = () => {
-    // Will change fadeAnim value to 0 in 3 seconds
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  };
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const savedData = await AsyncStorage.getItem('checkListData');
+        if (savedData) {
+          setData(JSON.parse(savedData));
+        }
+      } catch (error) {
+        console.error('Error loading data from AsyncStorage:', error);
+      }
+    };
 
-  console.log("Refreshed CheckList.js...");
+    loadData();
+  }, []);
 
-  if (taskFreq == 'recurring') 
-  {
-    if (differenceInDays(new Date(), taskDate) == daysNum || differenceInDays(new Date(), taskDate) % daysNum == 0 || differenceInDays(new Date(), taskDate) == 0)
-    {
-      return (
-        <Animated.View style={{ opacity: fadeAnim, flexDirection: 'row', alignItems: 'center', marginRight: 20, marginBottom: 10}}>
-          <SwipeListView
-          disableRightSwipe
-          rightOpenValue={-50}
-          data={this.state.listViewData}
-          renderItem={() => (
-              <View style={[styles.rowFront, {backgroundColor: theme.colors.background, borderBottomColor: theme.colors.background}]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
-                  <BouncyCheckbox
-                  size={25}
-                  fillColor="blue"
-                  TouchableComponent={Pressable}
-                  unfillColor={theme.colors.background}
-                  text={label} 
-                  iconStyle={{ borderColor: "blue" }}
-                  innerIconStyle={{ borderWidth: 2 }}
-                  textStyle={{ fontFamily: "sans-serif-light", color: theme.colors.text, marginRight: 100, marginBottom: 5}}
-                  onPress={() => { setChecked(!checked); if (!checked && taskFreq === 'one') {fadeOut(); setTimeout(() => {onDelete(index);}, 1000);}}}
-                  style={{ flexDirection: 'row', flex: 1, marginLeft: 20 }}
-                />
-                <Icon source={icon} color={"blue"} size={25}/>
-                <Text>  </Text>
-                <Icon source={taskFreq === 'daily' ? 'repeat-variant' : taskFreq === 'recurring' ? 'calendar-refresh' : 'numeric-1-box'}  color={"blue"} size={25}/>
-                </View>
-              </View>
-          )}
-          renderHiddenItem={ () => (
-              <View style={[styles.rowBack, {backgroundColor: theme.colors.background}]}>
-                  <Text></Text>
-                  <TouchableOpacity onPress={() => onDelete(index)}>
-                  <Icon source="trash-can-outline" color={"red"} size={25} style={{marginBottom: 50}}/>
-                  </TouchableOpacity>
-              </View>
-          )}
-          />
-        </Animated.View>
-      );
-    }
-    else 
-    {
-      return (
-        <Animated.View style={{ opacity: fadeAnim, flexDirection: 'row', alignItems: 'center', marginRight: 20, marginBottom: 10}}>
-          <SwipeListView
-          disableRightSwipe
-          rightOpenValue={-50}
-          data={this.state.listViewData}
-          renderItem={() => (
-              <View style={[styles.rowFront, {backgroundColor: theme.colors.background, borderBottomColor: theme.colors.background}]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
-                  <BouncyCheckbox
-                  size={25}
-                  fillColor="blue"
-                  TouchableComponent={Pressable}
-                  unfillColor={theme.colors.background}
-                  text={"TEST"} 
-                  iconStyle={{ borderColor: "blue" }}
-                  innerIconStyle={{ borderWidth: 2 }}
-                  textStyle={{ fontFamily: "sans-serif-light", color: theme.colors.text, marginRight: 100, marginBottom: 5}}
-                  onPress={() => { setChecked(!checked); if (!checked && taskFreq === 'one') {fadeOut(); setTimeout(() => {onDelete(index);}, 1000);}}}
-                  style={{ flexDirection: 'row', flex: 1, marginLeft: 20 }}
-                />
-                <Icon source={icon} color={"blue"} size={25}/>
-                <Text>  </Text>
-                <Icon source={taskFreq === 'daily' ? 'repeat-variant' : taskFreq === 'recurring' ? 'calendar-refresh' : 'numeric-1-box'}  color={"blue"} size={25}/>
-                </View>
-              </View>
-          )}
-          renderHiddenItem={ () => (
-              <View style={[styles.rowBack, {backgroundColor: theme.colors.background}]}>
-                  <Text></Text>
-                  <TouchableOpacity onPress={() => onDelete(index)}>
-                  <Icon source="trash-can-outline" color={"red"} size={25} style={{marginBottom: 50}}/>
-                  </TouchableOpacity>
-              </View>
-          )}
-          />
-        </Animated.View>
-      );
-    }
-  }
-  else 
-  {
-    return (
-      <Animated.View style={{ opacity: fadeAnim, flexDirection: 'row', alignItems: 'center', marginRight: 20, marginBottom: 10}}>
-        <SwipeListView
-        disableRightSwipe
-        rightOpenValue={-50}
-        data={this.state.listViewData}
-        renderItem={() => (
-            <View style={[styles.rowFront, {backgroundColor: theme.colors.background, borderBottomColor: theme.colors.background}]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
-                <BouncyCheckbox
-                size={25}
-                fillColor="blue"
-                TouchableComponent={Pressable}
-                unfillColor={theme.colors.background}
-                text={label} 
-                iconStyle={{ borderColor: "blue" }}
-                innerIconStyle={{ borderWidth: 2 }}
-                textStyle={{ fontFamily: "sans-serif-light", color: theme.colors.text, marginRight: 100, marginBottom: 5}}
-                onPress={() => { setChecked(!checked); if (!checked && taskFreq === 'one') {fadeOut(); setTimeout(() => {onDelete(index);}, 1000);}}}
-                style={{ flexDirection: 'row', flex: 1, marginLeft: 20 }}
-              />
-              <Icon source={icon} color={"blue"} size={25}/>
-              <Text>  </Text>
-              <Icon source={taskFreq === 'daily' ? 'repeat-variant' : taskFreq === 'recurring' ? 'calendar-refresh' : 'numeric-1-box'}  color={"blue"} size={25}/>
-              </View>
-            </View>
-        )}
-        renderHiddenItem={ () => (
-            <View style={[styles.rowBack, {backgroundColor: theme.colors.background}]}>
-                <Text></Text>
-                <TouchableOpacity onPress={() => onDelete(index)}>
-                <Icon source="trash-can-outline" color={"red"} size={25} style={{marginBottom: 50}}/>
-                </TouchableOpacity>
-            </View>
-        )}
-        />
-      </Animated.View>
-    );
-  }
-};
+  // Save data to AsyncStorage whenever data changes
+  useEffect(() => {
+    const saveData = async () => {
+      try {
+        await AsyncStorage.setItem('checkListData', JSON.stringify(data));
+      } catch (error) {
+        console.error('Error saving data to AsyncStorage:', error);
+      }
+    };
 
-const AddCheckboxModal = ({ navigation, handleAddCheckbox }) => {
-
-  const theme = useTheme();
-
-  const [showIconPicker, setShowIconPicker] = useState(false);
+    saveData();
+  }, [data]);
+  
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [newTask, setNewTask] = useState('');
+  const [icon, setIcon] = React.useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const onSelect = (icon, searchText, iconName) => {
-    console.log(iconName);
-    setIcon(iconName);
-    setShowIconPicker(false);
-  };
-
-
-  const [label, setLabel] = React.useState('');
-  const [icon, setIcon] = React.useState('');
   const [taskFreq, setTaskFreq] = React.useState('daily');
+
   const taskDate = new Date();
-  useEffect(() => {
-    setTaskFreq('daily');
-  }, []);
+
   const [daysNum, setDaysNum] = useState('');
 
   const handleDaysNum = (text) => {
@@ -195,17 +72,28 @@ const AddCheckboxModal = ({ navigation, handleAddCheckbox }) => {
   };
 
 
-  const handleAdd = () => {
-    // Validate input and add the new checkbox
-    if (label && icon) {
-      handleAddCheckbox({ label, icon, taskFreq, taskDate, daysNum });
-      setLabel('');
-      setIcon('');
-      setTaskFreq('daily');
-      setDaysNum('');
-      navigation.navigate('Main')   
-     }
+  
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const fadeOut = (item) => {
+    Animated.timing(item.fadeAnim, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      // After the fade-out animation is complete, delete the item
+      deleteItem(item.id);
+    });
   };
+
+  const onSelect = (icon, searchText, iconName) => {
+    console.log(iconName);
+    setIcon(iconName);
+    setShowIconPicker(false);
+  };
+
+
+  const toggleModal = () => setModalVisible(!isModalVisible);
 
   const handleIconSelect = () => {
     Keyboard.dismiss();
@@ -215,44 +103,141 @@ const AddCheckboxModal = ({ navigation, handleAddCheckbox }) => {
       setIsLoading(false); // Hide loading indicator
     }, 100); // Simulating delay, you can adjust the time as needed
   };
-  
-const handleCancel = () => {
-  navigation.navigate('Main')
-}
 
+  const renderRightActions = (progress, dragX, item, deleteItem) => {
+    return (
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingLeft: 15}}>
+        <TouchableOpacity onPress={() => deleteItem(item.id)}>
+        <View style={{marginTop: 30, marginRight: 30}}>
+        <Icon source="trash-can-outline" color={'red'} size={25} />
+        </View>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+const renderItem = ({ item, index, drag, isActive }) => {
+  if (
+    taskFreq !== 'recurring' ||
+    (taskFreq === 'recurring' &&
+      (differenceInDays(new Date(), taskDate) === daysNum ||
+        differenceInDays(new Date(), taskDate) % daysNum === 0 ||
+        differenceInDays(new Date(), taskDate) === 0))
+  ) {
+  return (
+    <Swipeable
+      rightThreshold={30}
+      leftThreshold={30}
+      renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, item, deleteItem)}
+    >
+      <TouchableOpacity onLongPress={drag}>
+        <Animated.View style={{ opacity: item.fadeAnim,}}>
+          <View style={[isActive ? styles.activeItem : styles.item, {backgroundColor: theme.colors.surface}]}>
+            <BouncyCheckbox
+              size={25}
+              fillColor="blue"
+              unfillColor={theme.colors.background}
+              innerIconStyle={{ borderWidth: 2 }}
+              textStyle={{ fontFamily: 'sans-serif-light', color: theme.colors.text, marginBottom: 5}}
+              text={item.text}
+              isChecked={item.checked}
+              onPress={(isChecked) => {
+                if (taskFreq === 'one') {
+                  fadeOut(item);
+                } else {
+                  const updatedData = data.map((dataItem) =>
+                    dataItem.id === item.id ? { ...dataItem, checked: isChecked } : dataItem
+                  );
+                  setData(updatedData);
+                }
+              }}
+            />
+            <View style={{flex: 1}}>
+
+            </View>
+            <Icon source={item.icon} color={'blue'} size={25} />
+            <Text> </Text>
+            <Icon style={{flex: 1, }}
+              source={
+                item.taskFreq === 'daily'
+                  ? 'repeat-variant'
+                  : item.taskFreq === 'recurring'
+                  ? 'calendar-refresh'
+                  : 'numeric-1-box'
+              }
+              color={'blue'}
+              size={28}
+            />
+          </View>
+        </Animated.View>
+      </TouchableOpacity>
+    </Swipeable>
+  );}
+  else {return null;}
+          
+};
+  const deleteItem = (itemId) => {
+    const updatedData = data.filter((item) => item.id !== itemId);
+    setData(updatedData);
+  };
+
+  const addTask = () => {
+    if (newTask.trim() !== '') {
+      const newFadeAnim = new Animated.Value(1); // Create a new animated value for opacity
+      const updatedData = [
+        ...data,
+        { id: (data.length + 1).toString(), text: newTask, checked: false, icon: icon, taskFreq: taskFreq, fadeAnim: newFadeAnim, taskDate: taskDate },
+      ];
+      setData(updatedData);
+      setNewTask('');
+      toggleModal();
+    }
+  };
+  
+  const [showIconPicker, setShowIconPicker] = useState(false);
 
 
   return (
-      <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
-        <TextInput
-          color={theme.colors.text}
-          placeholderTextColor={theme.colors.text}
-          placeholder="Task name..."
-          value={label}
-          onChangeText={text => setLabel(text)}
+    <Provider>
+      <GestureHandlerRootView style={styles.container}>
+        <DraggableFlatList
+          data={data}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          onDragEnd={({ data }) => {
+            setData(data);
+            console.log("TEST");
+          }}
+          //activationDistance={50} // Adjust this value according to your preference
         />
-        <Spacer height={20} /> 
-        <View style={styles.iconButtonContainer}>
-        <Button mode="contained" icon={icon} onPress={handleIconSelect}>Select Icon</Button>
-        {isLoading && <ActivityIndicator style={styles.activityIndicator} size="small" color={theme.colors.primary} />}
-      </View>
-        {showIconPicker && (
-        <View> 
-          <IconPicker
-    searchTitle={'Name'}
-    numColumns={6}
-    iconSize={20}
-    iconColor="#fff"
-    backgroundColor='#121212'
-    placeholderText="Search Sleep, Run..."
-    placeholderTextColor="#555"
-    onClick={onSelect}
-  />
-  </View>
-)}
-      {!showIconPicker && (
-        <View style={{ width: '100%', alignItems: "center"}}>
-      <SegmentedButtons
+
+        <Portal>
+          <Modal visible={isModalVisible} onDismiss={toggleModal} contentContainerStyle={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Add New Task</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter task name"
+              value={newTask}
+              onChangeText={(text) => setNewTask(text)}
+            />
+              <View style={styles.iconButtonContainer}>
+              <Button mode="contained" icon={icon} onPress={handleIconSelect}>Select Icon</Button>
+              {isLoading && <ActivityIndicator style={styles.activityIndicator} size="small" color={theme.colors.primary} />}
+            </View>
+            {showIconPicker && (
+              <View>
+                <IconPicker
+                  searchTitle={'Name'}
+                  numColumns={6}
+                  iconSize={20}
+                  iconColor="#fff"
+                  backgroundColor='#121212'
+                  placeholderText="Search Sleep, Run..."
+                  placeholderTextColor="#555"
+                  onClick={onSelect}
+                />
+              </View>
+            )}      
+            <SegmentedButtons
         style={{marginTop: 25,  marginRight: 5, marginLeft: 5}}
         value={taskFreq}
         onValueChange={setTaskFreq}
@@ -273,12 +258,11 @@ const handleCancel = () => {
             icon: 'numeric-1-box'
           },
         ]}
-      />
-      <Spacer height={10} />
-      {taskFreq === 'recurring' && (
+      />   
+            {taskFreq === 'recurring' && (
       <View style={{ flexDirection: 'row', alignItems: 'center'}}>
         <Text style={{color:theme.colors.text}}>
-          The task will repeat for{'\u00A0'}
+          The task will repeat every{'\u00A0'}
         </Text>
         <TextInput
           color={theme.colors.text}
@@ -293,126 +277,66 @@ const handleCancel = () => {
         </Text>
       </View>
       )}
-      </View>
-      )}
-        <Spacer height={100} />
-        <Button mode="contained" onPress={handleAdd}>Add</Button>
-        <Spacer height={10} />
-        <Button mode="contained" onPress={handleCancel}>Cancel</Button>
-      </View>
-);
-};
+            <Button mode="contained" onPress={addTask}>
+              Add
+            </Button>
+          </Modal>
+        </Portal>
 
-const Stack = createNativeStackNavigator();
-
-
-export default function CheckList() {
-
-  const [checkboxes, setCheckboxes] = React.useState([]);
-
-  useEffect(() => {
-    // Load tasks from AsyncStorage when the component mounts
-    const loadCheckboxes = async () => {
-      try {
-        const storedCheckboxes = await AsyncStorage.getItem('checkboxes');
-        if (storedCheckboxes) {
-          setCheckboxes(JSON.parse(storedCheckboxes));
-        }
-      } catch (error) {
-        console.error('Error loading checkboxes from AsyncStorage: ', error);
-      }
-    };
-    loadCheckboxes();
-  }, []); // Empty dependency array ensures this effect runs only once on mount
-
-
-  const handleAddCheckbox = (newCheckbox) => {
-    setCheckboxes([...checkboxes, newCheckbox]);
-
-    // Save updated checkboxes to AsyncStorage
-    AsyncStorage.setItem('checkboxes', JSON.stringify([...checkboxes, newCheckbox]));
-  };
-
-  const handleDeleteCheckbox = (index) => {
-    const newCheckboxes = [...checkboxes];
-    newCheckboxes.splice(index, 1);
-    setCheckboxes(newCheckboxes);
-
-    // Save updated checkboxes to AsyncStorage
-    AsyncStorage.setItem('checkboxes', JSON.stringify(newCheckboxes));
-  };
-
-  function MainScreen({ navigation }) {
-    return (
-      <View style={styles.container}>
-        {checkboxes.map((checkbox, index) => (
-          <ListItem key={index} label={checkbox.label} icon={checkbox.icon} taskFreq={checkbox.taskFreq} taskDate={checkbox.taskDate} daysNum={checkbox.daysNum} index={index} onDelete={handleDeleteCheckbox} />
-          ))}
-        <Spacer height={100} />
-        <Button mode="contained" onPress={() => navigation.navigate('AddScreen')}>
-          <Icon source="plus" size={20}/>
-        </Button>      
-      </View>
-    );
-  }
-
-  return (
-    <Stack.Navigator initialRouteName="Main" screenOptions={{headerShown: false}}>
-      <Stack.Screen name="Main" component={MainScreen} />
-      <Stack.Screen name="AddScreen">
-
-        {(props) => (
-          <AddCheckboxModal
-            {...props}
-            handleAddCheckbox={handleAddCheckbox}
-          />
-        )}
-      </Stack.Screen>
-    </Stack.Navigator>
+        <FAB
+          style={styles.fab}
+          mode="elevated" 
+          icon="plus"
+          onPress={toggleModal}
+        />
+      </GestureHandlerRootView>
+    </Provider>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
+    marginTop: 50,
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  modalContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  customButton: {
-    padding: 10,
-    borderRadius: 5,
-  },
-  rowFront: {
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderRadius: 5,
-    justifyContent: 'center',
-    height: 50,
-},
-  rowBack: {
-    alignItems: 'center',
-    backgroundColor: 'black',
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingLeft: 15,
-    paddingBottom: 13
-  },
-  iconButtonContainer: {
+  item: {
+    padding: 20,
+    marginVertical: 8,
+    marginHorizontal: 10,
+    borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-
-  activityIndicator: {
-    marginLeft: 10,
+  activeItem: {
+    padding: 20,
+    marginVertical: 8,
+    marginHorizontal: 10,
+    borderRadius: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    alignSelf: 'center',
+    margin: 16,
+    bottom: 0,
+  },  
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    margin: 20,
+    borderRadius: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    padding: 8,
   },
 });
-
-

@@ -1,14 +1,16 @@
-//FLOATING ACTION BUTTON
-import React from 'react';
+// //FLOATING ACTION BUTTON
+import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { AppRegistry } from 'react-native';
 import { PaperProvider, MD3LightTheme, MD3DarkTheme, adaptNavigationTheme, useTheme, Appbar, Switch } from 'react-native-paper';
 import CheckList from './CheckList';
 import MilestoneList from './MilestoneList';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
-import LottieView from "lottie-react-native";
+import Settings from './Settings';
+import { PreferencesContext } from './PreferencesContext';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 import {
   NavigationContainer,
@@ -16,9 +18,14 @@ import {
   DefaultTheme as NavigationDefaultTheme,
 } from '@react-navigation/native';
 
-import { PreferencesContext } from './PreferencesContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { gestureHandlerRootHOC } from 'react-native-gesture-handler';
 
+
+// enables edge-to-edge mode
+NavigationBar.setPositionAsync('absolute')
+// transparent backgrounds to see through
+NavigationBar.setBackgroundColorAsync('#ffffff00')
 
 const { LightTheme, DarkTheme } = adaptNavigationTheme({
   reactNavigationLight: NavigationDefaultTheme,
@@ -42,55 +49,10 @@ const CombinedDarkTheme = {
   },
 };
 
-const DrawerContent = ({ navigation }) => {
-    const theme = useTheme();
-    const { toggleTheme, isThemeDark } = React.useContext(PreferencesContext);
-  
-  
-    const themeAnim = React.useRef(null);
-    const isFirstRun = React.useRef(true);
-  
-    React.useEffect(() => {
-      if (isFirstRun.current) {
-        if (isThemeDark) 
-        {
-          themeAnim.current.play(90, 90)
-        } 
-        else 
-        {
-          themeAnim.current.play(0, 0)
-        }
-        isFirstRun.current = false;
-      } 
-      else if (isThemeDark) 
-      {
-        themeAnim.current.play(16, 90)
-      }
-      else 
-      {
-        themeAnim.current.play(90, 153)
-      }
-    }, [isThemeDark]);
-
-  return (
-    <View style={{ marginTop: 630, marginRight: 200, flex: 1, justifyContent: 'flex-end' }}>
-      <TouchableOpacity onPress={toggleTheme}>
-        <LottieView
-          source={require("./assets/LightToDark.json")}
-          style={{ width: 100, height: 100 }}
-          autoPlay={false}
-          loop={false}
-          ref={themeAnim}
-        />
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-const Drawer = createDrawerNavigator();
 
 
 export default function App() {
+
 
 
   const [isThemeDark, setIsThemeDark] = React.useState(false);
@@ -134,21 +96,43 @@ export default function App() {
     [toggleTheme, isThemeDark]
   );
 
+  
+  const Tab = createBottomTabNavigator();
+
+
+
   return (
     <PreferencesContext.Provider value={preferences}>
       <PaperProvider theme={theme}>
         <NavigationContainer theme={theme}>
-        <Drawer.Navigator initialRouteName="Daily Ticks" drawerContent={props => {
-    return (
-      <DrawerContentScrollView {...props}>
-        <DrawerItemList {...props} />
-        <DrawerContent {...props} />
-        </DrawerContentScrollView>
-    )
-  }}>
-        <Drawer.Screen name="Daily Ticks" component={CheckList} />
-        {/* <Drawer.Screen name="Milestones" component={MilestoneList} /> */}
-        </Drawer.Navigator>
+          <Tab.Navigator 
+            screenOptions={({ route }) => ({
+              headerShown: false,
+              tabBarIcon: ({ focused, color, size }) => {
+                let iconName;
+
+                if (route.name === 'Ticks') {
+                  iconName = focused ? 'checkbox' : 'checkbox-outline';
+                } 
+                else if (route.name === 'Milestones') {
+                  iconName = focused ? 'star' : 'star-outline';
+                }
+                else if (route.name === 'Settings') {
+                  iconName = focused ? 'cog' : 'cog-outline';
+                }
+
+
+                return <Ionicons name={iconName} size={size} color={color}></Ionicons>;
+              },
+              tabBarActiveTintColor: 'tomato',
+              tabBarInactiveTintColor: 'gray',
+            })}
+          >
+            <Tab.Screen name="Ticks" component={gestureHandlerRootHOC(CheckList)}/>
+            <Tab.Screen name="Milestones" component={MilestoneList}/>
+            <Tab.Screen name="Settings" component={Settings}/>
+          </Tab.Navigator>
+          <StatusBar translucent/>
         </NavigationContainer>
       </PaperProvider>
     </PreferencesContext.Provider>
