@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { PaperProvider, MD3LightTheme, MD3DarkTheme, adaptNavigationTheme, useTheme, Appbar, Switch } from 'react-native-paper';
 import CheckList from './CheckList';
 import MilestoneList from './MilestoneList';
@@ -20,12 +20,15 @@ import {
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { gestureHandlerRootHOC } from 'react-native-gesture-handler';
+import {AutoDragSortableView} from 'react-native-drag-sort';
 
 
-// enables edge-to-edge mode
-NavigationBar.setPositionAsync('absolute')
-// transparent backgrounds to see through
-NavigationBar.setBackgroundColorAsync('#ffffff00')
+if (Platform.OS === 'android') {
+  // enables edge-to-edge mode
+  NavigationBar.setPositionAsync('absolute');
+  // transparent backgrounds to see through
+  NavigationBar.setBackgroundColorAsync('#ffffff00');
+}
 
 const { LightTheme, DarkTheme } = adaptNavigationTheme({
   reactNavigationLight: NavigationDefaultTheme,
@@ -50,9 +53,7 @@ const CombinedDarkTheme = {
 };
 
 
-
 export default function App() {
-
 
 
   const [isThemeDark, setIsThemeDark] = React.useState(false);
@@ -147,3 +148,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+
+
+
+
+

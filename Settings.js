@@ -41,7 +41,7 @@ export default function Settings() {
     
         return (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{fontFamily: "sans-serif-light", color: theme.colors.text}}>Theme: </Text>
+              <Text style={{fontFamily: Platform.OS === 'android' ? 'sans-serif-light' : 'System', marginBottom: -3, color: theme.colors.text}}>Theme: </Text>
               <TouchableWithoutFeedback onPress={toggleTheme}>
                 <LottieView
                   source={require("./assets/LightToDark.json")}
