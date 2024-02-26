@@ -27,6 +27,8 @@ import Octicons from 'react-native-vector-icons/Octicons';
 import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import Zocial from 'react-native-vector-icons/Zocial';
 
+import ColorPicker, { Panel1, Swatches, Preview, OpacitySlider, HueSlider } from 'reanimated-color-picker';
+
 
 const {width} = Dimensions.get('window')
 
@@ -36,10 +38,14 @@ const childrenHeight = 48
 
 
 
+
 export default function CheckList() {
   const theme = useTheme();
 
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
 
+
+  const [textInputColor, setTextInputColor] = useState('gray');
 
 
   const [data, setData] = useState([
@@ -96,6 +102,8 @@ export default function CheckList() {
 
   const [taskFreq, setTaskFreq] = React.useState('daily');
 
+  const [taskColor, setTaskColor] = React.useState('blue');
+
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const createFadeAnim = () => new Animated.Value(1);
@@ -134,8 +142,14 @@ export default function CheckList() {
     }, 100); // Simulating delay, you can adjust the time as needed
   };
 
+  const handleColorSelect = () => {
+    Keyboard.dismiss();
+    setShowColorPicker(true);
+  };
 
-  const [iconComponent, setIconComponent] = useState(() => <FontAwesome/>);
+
+
+  const [iconComponent, setIconComponent] = useState(() => <Feather name="info" color={theme.colors.onBackground}  size={30}/>);
 
   const [iconFamily, setIconFamily] = useState(() => <FontAwesome/>);
 
@@ -144,83 +158,91 @@ export default function CheckList() {
     console.log(iconSet);
 
 
-    // switch (iconSet) {
-    //   case 'AntDesign':
-    //     setIconComponent(<AntDesign name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<AntDesign name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'Entypo':
-    //     setIconComponent(<Entypo name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<Entypo name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'EvilIcons':
-    //     setIconComponent(<EvilIcons name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<EvilIcons name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'Feather':
-    //     setIconComponent(<Feather name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<Feather name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'FontAwesome':
-    //     setIconComponent(<FontAwesome name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<FontAwesome name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'FontAwesome5':
-    //     setIconComponent(<FontAwesome5 name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<FontAwesome5 name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'Fontisto':
-    //     setIconComponent(<Fontisto name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<Fontisto name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'Foundation':
-    //     setIconComponent(<Foundation name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<Foundation name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'Ionicons':
-    //     setIconComponent(<Ionicons name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<Ionicons name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'MaterialCommunityIcons':
-    //     setIconComponent(<MaterialCommunityIcons name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<MaterialCommunityIcons name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'MaterialIcons':
-    //     setIconComponent(<MaterialIcons name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<MaterialIcons name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'Octicons':
-    //     setIconComponent(<Octicons name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<Octicons name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'SimpleLineIcons':
-    //     setIconComponent(<SimpleLineIcons name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<SimpleLineIcons name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   case 'Zocial':
-    //     setIconComponent(<Zocial name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<Zocial name={iconName} color={'blue'} size={25}/>);
-    //     break;
-    //   default:
-    //     // Default to FontAwesome if the library is not recognized
-    //     setIconComponent(<FontAwesome name={iconName} color={'blue'} size={25}/>);
-    //     setIconFamily(<FontAwesome name={iconName} color={'blue'} size={25}/>);
-    // }
+    switch (iconSet) {
+      case 'AntDesign':
+        setIconComponent(<AntDesign name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Entypo':
+        setIconComponent(<Entypo name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'EvilIcons':
+        setIconComponent(<EvilIcons name={iconName}  color={theme.colors.onBackground} size={30}/>);
+        break;
+      case 'Feather':
+        setIconComponent(<Feather name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'FontAwesome':
+        setIconComponent(<FontAwesome name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'FontAwesome5':
+        setIconComponent(<FontAwesome5 name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Fontisto':
+        setIconComponent(<Fontisto name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Foundation':
+        setIconComponent(<Foundation name={iconName} color={theme.colors.onBackground}   size={30}/>);
+        break;
+      case 'Ionicons':
+        setIconComponent(<Ionicons name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'MaterialCommunityIcons':
+        setIconComponent(<MaterialCommunityIcons name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'MaterialIcons':
+        setIconComponent(<MaterialIcons name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Octicons':
+        setIconComponent(<Octicons name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'SimpleLineIcons':
+        setIconComponent(<SimpleLineIcons name={iconName} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Zocial':
+        setIconComponent(<Zocial name={iconName} color={theme.colors.onBackground} size={30}/>);
+        break;
+      default:
+        // Default to FontAwesome if the library is not recognized
+        setIconComponent(<Feather name="info" color={theme.colors.onBackground}  size={30}/>);
+    }
     setIconFamily(iconSet);
     setIcon(iconName);
     setShowIconPicker(false);
   };
   
 
-  const renderIcon = (iconName, iconFamily) => {
+  const renderIcon = (iconName, iconFamily, taskColor) => {
     switch (iconFamily) {
-      case 'FontAwesome':
-        return <FontAwesome name={iconName} color={'blue'} size={25}/>;
       case 'AntDesign':
-          return <AntDesign name={iconName} color={'blue'} size={25}/>;
-      // Add other cases for different icon families
+        return <AntDesign name={iconName} color={taskColor} size={25}/>;
+      case 'Entypo':
+        return <Entypo name={iconName} color={taskColor} size={25}/>;
+      case 'EvilIcons':
+        return <EvilIcons name={iconName} color={taskColor} size={25}/>;
+      case 'Feather':
+        return <Feather name={iconName} color={taskColor} size={25}/>;
+      case 'FontAwesome':
+        return <FontAwesome name={iconName} color={taskColor} size={25}/>;
+      case 'FontAwesome5':
+        return <FontAwesome5 name={iconName} color={taskColor} size={25}/>;
+      case 'Fontisto':
+        return <Fontisto name={iconName} color={taskColor} size={25}/>;
+      case 'Foundation':
+        return <Foundation name={iconName} color={taskColor} size={25}/>;
+      case 'Ionicons':
+        return <Ionicons name={iconName} color={taskColor} size={25}/>;
+      case 'MaterialCommunityIcons':
+        return <MaterialCommunityIcons name={iconName} color={taskColor} size={25}/>;
+      case 'MaterialIcons':
+        return <MaterialIcons name={iconName} color={taskColor} size={25}/>;
+      case 'Octicons':
+        return <Octicons name={iconName} color={taskColor} size={25}/>;
+      case 'SimpleLineIcons':
+        return <SimpleLineIcons name={iconName} color={taskColor} size={25}/>;
+      case 'Zocial':
+        return <Zocial name={iconName} color={taskColor} size={25}/>;
       default:
-        return null; // or a default icon
+        return null;
     }
   };
 
@@ -251,15 +273,27 @@ export default function CheckList() {
     if (newTask.trim() !== '') {
       const updatedData = [
         ...data,
-        {   id: uuid.v4(), text: newTask, checked: false, icon: icon, iconFamily: iconFamily, taskFreq: taskFreq, fadeAnim: new Animated.Value(1), taskDate: taskDate, daysNum: daysNum },
+        {   id: uuid.v4(), text: newTask, checked: false, icon: icon, iconFamily: iconFamily, taskColor: taskColor, taskFreq: taskFreq, fadeAnim: new Animated.Value(1), taskDate: taskDate, daysNum: daysNum },
       ];
       setData(updatedData);
       setNewTask('');
       toggleModal();
     }
+    else 
+    {
+      Animated.sequence([
+        Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
+      ]).start();
+
+      setTextInputColor('red');
+    }
   };
   
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
 
   const [isDragged, setIsDragged] = useState(false);
@@ -315,6 +349,21 @@ export default function CheckList() {
     )
   ));
 
+  const [selectedColor, setSelectedColor] = useState('blue');
+
+
+
+  const onSelectColor = (selectedColor) => {
+    console.log(selectedColor);
+    setTaskColor(selectedColor);
+    setShowColorPicker(false);
+  };
+
+  
+  const handleTextChange = (text) => {
+    setNewTask(text);
+    setTextInputColor('gray');
+  };
 
   return (
     <Provider >
@@ -356,7 +405,7 @@ const renderItemContent = (
             <View style={[styles.item, {backgroundColor: theme.colors.surface}]}>
               <BouncyCheckbox
                 size={25}
-                fillColor="blue"
+                fillColor={item.taskColor}
                 unfillColor={theme.colors.background}
                 innerIconStyle={{ borderWidth: 2 }}
                 textStyle={{ fontFamily: Platform.OS === 'android' ? 'sans-serif-light' : 'System', color: theme.colors.text, marginBottom: Platform.OS === 'android' ? 5 : 0}} text={item.text}
@@ -380,7 +429,7 @@ const renderItemContent = (
               />
               <View style={{flex: 1}}></View>
               {/* {item.iconFamily}       */}
-              {renderIcon(item.icon, item.iconFamily)}
+              {renderIcon(item.icon, item.iconFamily, item.taskColor)}
               {/* <Icon source={item.icon} color={'blue'} size={25} /> */}
                             
               <Text> </Text>
@@ -392,7 +441,7 @@ const renderItemContent = (
                     ? 'calendar-refresh'
                     : 'numeric-1-box'
                 }
-                color={'blue'}
+                color={item.taskColor}
                 size={28}
               />
             </View>
@@ -416,17 +465,27 @@ return (
         <Portal>
         <Modal visible={isModalVisible} onDismiss={toggleModal} contentContainerStyle={[styles.modalContainer, {backgroundColor: theme.colors.surface}]}>
             <Text style={[styles.modalTitle, {color: theme.colors.text}]}>Add New Task</Text>
+            <Animated.View style={{transform: [{ translateX: shakeAnimation }]}}>
             <TextInput
-              style={[styles.input, {color: theme.colors.text}]}
+              style={[styles.input, { color: theme.colors.text, borderColor: textInputColor, }]}
               placeholderTextColor={theme.colors.text}
               placeholder="Task name..."
               value={newTask}
-              onChangeText={(text) => setNewTask(text)}
+              onChangeText={handleTextChange} 
             />
-              <View style={styles.iconButtonContainer}>
-              <Button mode="contained" icon={() => iconComponent} onPress={handleIconSelect}>Select Icon</Button>
-              {isLoading && <ActivityIndicator style={styles.activityIndicator} size="small" color={theme.colors.primary} />}
-            </View>
+            </Animated.View>
+          <View style={{ marginLeft: 30, marginVertical: 10, flexDirection: "row", alignSelf: 'center', alignItems: 'center' }}>
+            <Button mode="contained" onPress={handleIconSelect} style={{ marginHorizontal: 8 }}>Select Icon</Button>
+            {iconComponent}
+            {isLoading ? <ActivityIndicator size="small" color={theme.colors.primary} style={{marginLeft: 10}}/> : <View style={{ width: 30 }} />}
+          </View>
+
+          <View style={{ marginLeft: 30, marginVertical: 10, flexDirection: "row", alignSelf: 'center', alignItems: 'center' }}>
+            <Button mode="contained" onPress={handleColorSelect} style={{ marginHorizontal: 5 }}>Select Color</Button>
+            <MaterialCommunityIcons name={"checkbox-blank-circle"} size={30} color={taskColor} />
+            <View style={{ width: 30 }} />
+          </View>
+
             <SegmentedButtons
         style={{marginVertical: 25, marginHorizontal: -13}}
         value={taskFreq}
@@ -494,6 +553,31 @@ return (
     </View>
   </View>
   )}
+{showColorPicker && (
+      <View style={{alignSelf: 'center', alignItems: 'center', backgroundColor: theme.colors.background, width: '100%', height: '100%'}}>
+<ColorPicker style={{ width: '80%', marginTop: 70, }} value={taskColor}   onComplete={(color) => setSelectedColor(color.hex)}>
+<View style={{marginBottom: 30}}>
+  <Panel1 />
+  </View>
+  <View style={{marginBottom: 30}}>
+          <HueSlider />
+  </View>
+          <Swatches />
+      </ColorPicker>
+      <View style={{marginTop: 15, marginBottom: 15}}>
+      <Button mode="contained" onPress={() => onSelectColor(selectedColor)}>
+              Select
+    </Button>
+    </View>
+      <Button mode="contained" onPress={() => setShowColorPicker(false)} >
+              Cancel
+    </Button>
+  
+      </View>
+)}
+
+
+
         </Portal>
 
         <FAB
@@ -545,7 +629,6 @@ const styles = StyleSheet.create({
     },
     input: {
       height: 45,
-      borderColor: 'gray',
       borderWidth: 1,
       borderRadius: 15, 
       marginBottom: 10,
