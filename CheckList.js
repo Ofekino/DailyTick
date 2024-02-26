@@ -276,7 +276,9 @@ export default function CheckList() {
         {   id: uuid.v4(), text: newTask, checked: false, icon: icon, iconFamily: iconFamily, taskColor: taskColor, taskFreq: taskFreq, fadeAnim: new Animated.Value(1), taskDate: taskDate, daysNum: daysNum },
       ];
       setData(updatedData);
+      setIcon('');
       setNewTask('');
+      setIconComponent(<Feather name="info" color={theme.colors.onBackground}  size={30}/>);
       toggleModal();
     }
     else 
