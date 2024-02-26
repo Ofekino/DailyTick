@@ -135,66 +135,96 @@ export default function CheckList() {
   };
 
 
-  const [iconComponent, setIconComponent] = useState(() => <FontAwesome name={icon} />);
+  const [iconComponent, setIconComponent] = useState(() => <FontAwesome/>);
 
+  const [iconFamily, setIconFamily] = useState(() => <FontAwesome/>);
 
   const onSelect = (selectedIcon, searchText, iconName, iconSet) => {
     console.log(iconName);
     console.log(iconSet);
 
 
-    switch (iconSet) {
-      case 'AntDesign':
-        setIconComponent(<AntDesign name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'Entypo':
-        setIconComponent(<Entypo name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'EvilIcons':
-        setIconComponent(<EvilIcons name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'Feather':
-        setIconComponent(<Feather name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'FontAwesome':
-        setIconComponent(<FontAwesome name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'FontAwesome5':
-        setIconComponent(<FontAwesome5 name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'Fontisto':
-        setIconComponent(<Fontisto name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'Foundation':
-        setIconComponent(<Foundation name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'Ionicons':
-        setIconComponent(<Ionicons name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'MaterialCommunityIcons':
-        setIconComponent(<MaterialCommunityIcons name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'MaterialIcons':
-        setIconComponent(<MaterialIcons name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'Octicons':
-        setIconComponent(<Octicons name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'SimpleLineIcons':
-        setIconComponent(<SimpleLineIcons name={iconName} color={'blue'} size={25}/>);
-        break;
-      case 'Zocial':
-        setIconComponent(<Zocial name={iconName} color={'blue'} size={25}/>);
-        break;
-      default:
-        // Default to FontAwesome if the library is not recognized
-        setIconComponent(<FontAwesome name={iconName} color={'blue'} size={25}/>);
-    }
+    // switch (iconSet) {
+    //   case 'AntDesign':
+    //     setIconComponent(<AntDesign name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<AntDesign name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'Entypo':
+    //     setIconComponent(<Entypo name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<Entypo name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'EvilIcons':
+    //     setIconComponent(<EvilIcons name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<EvilIcons name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'Feather':
+    //     setIconComponent(<Feather name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<Feather name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'FontAwesome':
+    //     setIconComponent(<FontAwesome name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<FontAwesome name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'FontAwesome5':
+    //     setIconComponent(<FontAwesome5 name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<FontAwesome5 name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'Fontisto':
+    //     setIconComponent(<Fontisto name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<Fontisto name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'Foundation':
+    //     setIconComponent(<Foundation name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<Foundation name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'Ionicons':
+    //     setIconComponent(<Ionicons name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<Ionicons name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'MaterialCommunityIcons':
+    //     setIconComponent(<MaterialCommunityIcons name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<MaterialCommunityIcons name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'MaterialIcons':
+    //     setIconComponent(<MaterialIcons name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<MaterialIcons name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'Octicons':
+    //     setIconComponent(<Octicons name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<Octicons name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'SimpleLineIcons':
+    //     setIconComponent(<SimpleLineIcons name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<SimpleLineIcons name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   case 'Zocial':
+    //     setIconComponent(<Zocial name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<Zocial name={iconName} color={'blue'} size={25}/>);
+    //     break;
+    //   default:
+    //     // Default to FontAwesome if the library is not recognized
+    //     setIconComponent(<FontAwesome name={iconName} color={'blue'} size={25}/>);
+    //     setIconFamily(<FontAwesome name={iconName} color={'blue'} size={25}/>);
+    // }
+    setIconFamily(iconSet);
     setIcon(iconName);
     setShowIconPicker(false);
   };
   
 
+  const renderIcon = (iconName, iconFamily) => {
+    switch (iconFamily) {
+      case 'FontAwesome':
+        return <FontAwesome name={iconName} color={'blue'} size={25}/>;
+      case 'AntDesign':
+          return <AntDesign name={iconName} color={'blue'} size={25}/>;
+      // Add other cases for different icon families
+      default:
+        return null; // or a default icon
+    }
+  };
+
+  
 
   const renderRightActions = (progress, dragX, item, deleteItem) => {
     return (
@@ -221,7 +251,7 @@ export default function CheckList() {
     if (newTask.trim() !== '') {
       const updatedData = [
         ...data,
-        {   id: uuid.v4(), text: newTask, checked: false, icon: icon, taskFreq: taskFreq, fadeAnim: new Animated.Value(1), taskDate: taskDate, daysNum: daysNum },
+        {   id: uuid.v4(), text: newTask, checked: false, icon: icon, iconFamily: iconFamily, taskFreq: taskFreq, fadeAnim: new Animated.Value(1), taskDate: taskDate, daysNum: daysNum },
       ];
       setData(updatedData);
       setNewTask('');
@@ -349,8 +379,9 @@ const renderItemContent = (
                   }}
               />
               <View style={{flex: 1}}></View>
-              {iconComponent}      
-              {/* <Icon icon={() =>  source={item.icon} color={'blue'} size={25} /> */}
+              {/* {item.iconFamily}       */}
+              {renderIcon(item.icon, item.iconFamily)}
+              {/* <Icon source={item.icon} color={'blue'} size={25} /> */}
                             
               <Text> </Text>
               <Icon
