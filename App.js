@@ -58,11 +58,48 @@ export default function App() {
 
   const [isThemeDark, setIsThemeDark] = React.useState(false);
 
+  const [notiFreq, setNotiFreq] = React.useState('disabled');
+
+  const [notiTime, setNotiTime] = React.useState(new Date(1710748800000));
+
+  const [currentStreakDate, setCurrentStreakDate] = React.useState(new Date(0));
+
+  const [currentStreakNum, setCurrentStreakNum] = React.useState(0);
+
+  const [actualStreakDate, setActualStreakDate] = React.useState(new Date(0));
+
   const toggleTheme = React.useCallback(() => {
     setIsThemeDark((prevIsThemeDark) => !prevIsThemeDark);
     saveTheme(!isThemeDark); // Save the theme when toggled
   }, [isThemeDark]);
 
+  const toggleNotiFreq = React.useCallback((newNotiFreq) => {
+    setNotiFreq(newNotiFreq);
+    saveNotiFreq(newNotiFreq);
+  }, [setNotiFreq]);
+
+  const toggleNotiTime = React.useCallback((newNotiTime) => {
+    setNotiTime(newNotiTime);
+    saveNotiTime(newNotiTime);
+  }, [setNotiTime]);
+
+
+  const toggleCurrentStreakDate = React.useCallback((newCurrentStreakDate) => {
+    setCurrentStreakDate(newCurrentStreakDate);
+    saveCurrentStreakDate(newCurrentStreakDate);
+  }, [setCurrentStreakDate]);
+
+  const toggleCurrentStreakNum = React.useCallback((newCurrentStreakNum) => {
+    setCurrentStreakNum(newCurrentStreakNum);
+    saveCurrentStreakNum(newCurrentStreakNum);
+  }, [setCurrentStreakNum]);
+
+  const toggleActualStreakDate = React.useCallback((newActualStreakDate) => {
+    setActualStreakDate(newActualStreakDate);
+    saveActualStreakDate(newActualStreakDate);
+  }, [setActualStreakDate]);
+
+  
   const saveTheme = async (isThemeDark) => {
     try {
       await AsyncStorage.setItem('themePreference', JSON.stringify(isThemeDark));
@@ -70,6 +107,47 @@ export default function App() {
       console.error('Error saving theme preference:', error);
     }
   };
+
+  const saveNotiFreq = async (notiFreq) => {
+    try {
+      await AsyncStorage.setItem('notiFreq', JSON.stringify(notiFreq));
+    } catch (error) {
+      console.error('Error saving notiFreq preference:', error);
+    }
+  };
+
+  const saveNotiTime = async (notiTime) => {
+    try {
+      await AsyncStorage.setItem('notiTime', JSON.stringify(notiTime));
+    } catch (error) {
+      console.error('Error saving notiTime preference:', error);
+    }
+  };
+
+  const saveCurrentStreakDate = async (currentStreakDate) => {
+    try {
+      await AsyncStorage.setItem('currentStreakDate', JSON.stringify(currentStreakDate));
+    } catch (error) {
+      console.error('Error saving currentStreakDate preference:', error);
+    }
+  };
+
+  const saveCurrentStreakNum = async (currentStreakNum) => {
+    try {
+      await AsyncStorage.setItem('currentStreakNum', JSON.stringify(currentStreakNum));
+    } catch (error) {
+      console.error('Error saving currentStreakNum preference:', error);
+    }
+  };
+
+  const saveActualStreakDate = async (actualStreakDate) => {
+    try {
+      await AsyncStorage.setItem('actualStreakDate', JSON.stringify(actualStreakDate));
+    } catch (error) {
+      console.error('Error saving actualStreakDate preference:', error);
+    }
+  };
+
 
   // Load theme preference when the component mounts
   React.useEffect(() => {
@@ -79,6 +157,32 @@ export default function App() {
         if (savedTheme !== null) {
           setIsThemeDark(JSON.parse(savedTheme));
         }
+
+        const savedNotiFreq = await AsyncStorage.getItem('notiFreq');
+        if (savedNotiFreq !== null) {
+                  setNotiFreq(JSON.parse(savedNotiFreq));
+        }
+
+        const savedNotiTime = await AsyncStorage.getItem('notiTime');
+        if (savedNotiTime !== null) {
+                  setNotiTime(new Date(JSON.parse(savedNotiTime)));
+        }
+
+        const savedCurrentStreakDate = await AsyncStorage.getItem('currentStreakDate');
+        if (savedCurrentStreakDate !== null) {
+                  setCurrentStreakDate(new Date(JSON.parse(savedCurrentStreakDate)));
+        }
+
+        const savedCurrentStreakNum = await AsyncStorage.getItem('currentStreakNum');
+        if (savedCurrentStreakNum !== null) {
+                  setCurrentStreakNum(JSON.parse(savedCurrentStreakNum));
+        }
+
+        const savedActualStreakDate = await AsyncStorage.getItem('actualStreakDate');
+        if (savedActualStreakDate !== null) {
+                  setActualStreakDate(new Date(JSON.parse(savedActualStreakDate)));
+        }
+
       } catch (error) {
         console.error('Error loading theme preference:', error);
       }
@@ -87,15 +191,42 @@ export default function App() {
     loadTheme();
   }, []);
 
+    // Load theme preference when the component mounts
+    // React.useEffect(() => {
+    //   const loadNotiFreq = async () => {
+    //     try {
+    //       const savedNotiFreq = await AsyncStorage.getItem('notiFreq');
+    //       if (savedNotiFreq !== null) {
+    //         setNotiFreq(JSON.parse(savedNotiFreq));
+    //       }
+    //     } catch (error) {
+    //       console.error('Error loading theme preference:', error);
+    //     }
+    //   };
+  
+    //   loadNotiFreq();
+    // }, []);
+
   const theme = isThemeDark ? CombinedDarkTheme : CombinedDefaultTheme;
+
 
   const preferences = React.useMemo(
     () => ({
       toggleTheme,
       isThemeDark,
+      notiFreq,
+      toggleNotiFreq,
+      notiTime,
+      toggleNotiTime,
+      currentStreakDate,
+      toggleCurrentStreakDate,
+      currentStreakNum,
+      toggleCurrentStreakNum,
+      actualStreakDate,
+      toggleActualStreakDate
     }),
-    [toggleTheme, isThemeDark]
-  );
+    [toggleTheme, isThemeDark, notiFreq, toggleNotiFreq, notiTime, toggleNotiTime, currentStreakDate, toggleCurrentStreakDate, currentStreakNum, toggleCurrentStreakNum, actualStreakDate, toggleActualStreakDate]);
+  
 
   
   const Tab = createBottomTabNavigator();

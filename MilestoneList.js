@@ -2,7 +2,7 @@ import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Dimensions, Image } from 'react-native';
 import {AutoDragSortableView} from 'react-native-drag-sort';
-
+import { List, Button } from 'react-native-paper';
 
 const {width} = Dimensions.get('window')
 
@@ -24,23 +24,14 @@ export default function MilestoneList() {
 
 
   return (
-    <View style={styles.container}>
-        <AutoDragSortableView
-    dataSource={AUTO_TEST_DATA}
-    parentWidth={parentWidth}
-    childrenWidth={childrenWidth}
-    childrenHeight={childrenHeight}
-    keyExtractor={(item, index) => item.id}
-    renderItem={(item, index) => (
-        <View style={styles.item}>
-            <View style={styles.item_icon_swipe}>
-                <Image style={styles.item_icon} source={item.icon}/>
-            </View>
-            <Text style={styles.item_text}>{item.txt}</Text>
-        </View>
-    )}
-/>
-    </View>
+    <List.Section style={{marginLeft: 20, marginTop: 50}}>
+    <List.Subheader>Some title</List.Subheader>
+    <List.Item title="First Item" left={() => <List.Icon icon="folder" />} />
+    <List.Item
+      title="Second Item"
+      right={() => <Button mode="contained" style={{ marginHorizontal: 8 }}>Select Icon</Button>}
+    />
+  </List.Section>
   );
 }
 

@@ -11,6 +11,11 @@ import Spacer from './Spacer';
 import DragList, {DragListRenderItemInfo} from 'react-native-draglist';
 import {AutoDragSortableView} from 'react-native-drag-sort'; // TESTING PHASE
 import uuid from 'react-native-uuid';
+import { PreferencesContext } from './PreferencesContext';
+import { AwesomeButton, ThemedButton } from "react-native-really-awesome-button";
+import ConfettiCannon from 'react-native-confetti-cannon';
+import LottieView from "lottie-react-native";
+import { useFonts } from 'expo-font';
 
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Entypo from 'react-native-vector-icons/Entypo';
@@ -30,30 +35,150 @@ import Zocial from 'react-native-vector-icons/Zocial';
 import ColorPicker, { Panel1, Swatches, Preview, OpacitySlider, HueSlider } from 'reanimated-color-picker';
 
 
-const {width} = Dimensions.get('window')
+import * as Notifications from 'expo-notifications';
+// import * as Permissions from 'expo-permissions';
+
+
+// Notifications.requestPermissionsAsync();
+
+
+
+const cancelAllScheduledNotifications = async () => {
+  await Notifications.cancelAllScheduledNotificationsAsync();
+};
+
+  // Call the function when you want to cancel all scheduled notifications
+  cancelAllScheduledNotifications();
+
+
+
+let modalVis = false;
+
+const {width, height} = Dimensions.get('window')
 
 const parentWidth = width
 const childrenWidth = width - 20
 const childrenHeight = 48
 
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
+const calculateUncheckedCount = (tasks) => {
+  return tasks.filter(item => !item.checked).length;
+};
+
+
+const handleDataChange = (data, notiFreq, notiTime) => {
+
+  const hours = notiTime.getHours(); 
+  const minutes = notiTime.getMinutes(); 
+
+  cancelAllScheduledNotifications();
+  console.log("Sending notification");
+  // Calculate the number of unchecked tasks whenever data changes
+  const uncheckedCount = calculateUncheckedCount(data);
+  if (uncheckedCount > 0) {
+    if (notiFreq === "daily") {
+        // Schedule a notification with the updated count, daily
+  Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Uncompleted tasks',
+      body: `You have ${uncheckedCount} tasks left!`,
+    },
+    trigger: {hour: hours, minute: minutes, repeats: true},
+  });
+    }
+    else if (notiFreq === "weekly") {
+              // Schedule a notification with the updated count, weekly
+  Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Uncompleted tasks',
+      body: `You have ${uncheckedCount} tasks left!`,
+    },
+    trigger: {weekday: 1, hour: hours, minute: minutes, repeats: true},
+  });
+    }
+
+}
+};
+
+const completeText = [
+  "Well done!",
+  "Great job!",
+  "Fantastic work!",
+  "All done!",
+  "Hooray!",
+  "Outstanding!",
+  "Bravo!",
+  "Awesome job!",
+  "Impressive!",
+  "Way to go!",
+  "Amazing work!",
+  "Superb!",
+  "Well played!",
+  "Terrific job!",
+  "Excellent!",
+  "Top-notch!",
+  "Well accomplished!",
+  "Sensational!",
+  "Marvelous job!",
+  "You did it!",
+  "Congrats!",
+  "Good stuff!"
+];
+
+const randomText = completeText[Math.floor(Math.random() * completeText.length)];
+
 
 
 export default function CheckList() {
+
+
+
+
+  const [fontsLoaded] = useFonts({
+    'VarelaRound-Regular': require('./assets/fonts/VarelaRound-Regular.ttf'),
+  });
+
+  const { notiFreq } = React.useContext(PreferencesContext);
+
+  const { notiTime } = React.useContext(PreferencesContext);
+
+
   const theme = useTheme();
 
+  const { currentStreakDate, toggleCurrentStreakDate } = React.useContext(PreferencesContext);
+
+  const { currentStreakNum, toggleCurrentStreakNum } = React.useContext(PreferencesContext);
+
+  const { actualStreakDate, toggleActualStreakDate } = React.useContext(PreferencesContext);
+
+
+  const [completeModalVisible, setCompleteModalVisible] = useState(false);
+
+
+
+  const [backupVis, setBackupVis] = useState(true);
+
+
   const shakeAnimation = useRef(new Animated.Value(0)).current;
+  const shakeAnimationRecurring = useRef(new Animated.Value(0)).current;
 
 
   const [textInputColor, setTextInputColor] = useState('gray');
 
 
-  const [data, setData] = useState([
-    // { id: '1', text: 'Item 1', checked: false },
-    // { id: '2', text: 'Item 2', checked: false },
-    // { id: '3', text: 'Item 3', checked: false },
-    // Add more items as needed
-  ]);
+
+  const [data, setData] = useState([]);
+
+
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -79,7 +204,9 @@ export default function CheckList() {
     };
 
     loadData();
+  
   }, []);
+
 
   // Save data to AsyncStorage whenever data changes
   useEffect(() => {
@@ -94,6 +221,14 @@ export default function CheckList() {
     saveData();
   }, [data]);
   
+  useEffect(() => {
+    handleDataChange(data, notiFreq, notiTime);
+  }, [data, notiFreq, notiTime]);
+  
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [itemId, setItemId] = useState(null); // Initialize with null or any appropriate initial value
+
   const [isModalVisible, setModalVisible] = useState(false);
   const [newTask, setNewTask] = useState('');
   const [icon, setIcon] = React.useState('');
@@ -101,6 +236,9 @@ export default function CheckList() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [taskFreq, setTaskFreq] = React.useState('daily');
+
+  const [checkedDay, setCheckedDay] = React.useState();
+
 
   const [taskColor, setTaskColor] = React.useState('blue');
 
@@ -122,17 +260,40 @@ export default function CheckList() {
 
   const [daysNum, setDaysNum] = useState('');
 
+  // const handleDaysNum = (text) => {
+  //   // Validate input to ensure it's a positive number
+  //   // setDaysNum(text);
+  //   const numericText = text.replace(/[^0-9]/g, '');
+  //   setDaysNum(numericText);
+
+  //   // if (/^\d+$/.test(text)) {
+  //   //   setDaysNum(text);
+  //   // }
+  // };
+
   const handleDaysNum = (text) => {
-    // Validate input to ensure it's a positive number
-    setDaysNum(text);
-    // if (/^\d+$/.test(text)) {
-    //   setDaysNum(text);
-    // }
+    // Remove non-numeric characters from the input
+    const numericText = text.replace(/[^0-9]/g, '');
+    
+    // Check if the input is empty
+    if (numericText === '') {
+      setDaysNum('');
+      return;
+    }
+
+    // Limit the input to the range of 1-999
+    const numericValue = Math.min(Math.max(parseInt(numericText) || 0, 1), 999);
+    
+    // Update the state with the limited numeric value
+    setDaysNum(numericValue.toString());
   };
 
 
-  const toggleModal = () => setModalVisible(!isModalVisible);
 
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+    // setIconComponent(<Feather opacity={0} name="info" color={theme.colors.onBackground}  size={30}/>);
+  }
   const handleIconSelect = () => {
     Keyboard.dismiss();
     setIsLoading(true); // Show loading indicator
@@ -149,9 +310,9 @@ export default function CheckList() {
 
 
 
-  const [iconComponent, setIconComponent] = useState(() => <Feather name="info" color={theme.colors.onBackground}  size={30}/>);
+  const [iconComponent, setIconComponent] = useState(() => <Feather opacity={0} name="info" color={theme.colors.onBackground}  size={30}/>);
 
-  const [iconFamily, setIconFamily] = useState(() => <FontAwesome/>);
+  const [iconFamily, setIconFamily] = useState(() => '');
 
   const onSelect = (selectedIcon, searchText, iconName, iconSet) => {
     console.log(iconName);
@@ -203,7 +364,7 @@ export default function CheckList() {
         break;
       default:
         // Default to FontAwesome if the library is not recognized
-        setIconComponent(<Feather name="info" color={theme.colors.onBackground}  size={30}/>);
+        setIconComponent(<Feather opacity={0} name="info" color={theme.colors.onBackground}  size={30}/>);
     }
     setIconFamily(iconSet);
     setIcon(iconName);
@@ -248,9 +409,15 @@ export default function CheckList() {
 
   
 
-  const renderRightActions = (progress, dragX, item, deleteItem) => {
+  const renderRightActions = (progress, dragX, item, editItem, deleteItem) => {
     return (
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingLeft: 15 }}>
+        <TouchableOpacity onPress={() => editItem(item.id)}>
+        <View style={{marginTop: 10, marginRight: 5}}>
+        <Icon source="note-edit-outline" color={'#4287f5'} size={25} />
+        </View>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => deleteItem(item.id)}>
         <View style={{marginTop: 10, marginRight: 0}}>
         <Icon source="trash-can-outline" color={'red'} size={25} />
@@ -261,26 +428,107 @@ export default function CheckList() {
   };
 
 
+  const editItem = (itemId) => {
+    setTextInputColor('gray');
+    const taskToEdit = data.find(task => task.id === itemId);
+    setIsEditing(true);
+    setItemId(itemId);
+    setNewTask(taskToEdit.text); // Set newTask to the current task's name
+    setIconFamily(taskToEdit.iconFamily);
+    switch (taskToEdit.iconFamily) {
+      case 'AntDesign':
+        setIconComponent(<AntDesign name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Entypo':
+        setIconComponent(<Entypo name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'EvilIcons':
+        setIconComponent(<EvilIcons name={taskToEdit.icon}  color={theme.colors.onBackground} size={30}/>);
+        break;
+      case 'Feather':
+        setIconComponent(<Feather name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'FontAwesome':
+        setIconComponent(<FontAwesome name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'FontAwesome5':
+        setIconComponent(<FontAwesome5 name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Fontisto':
+        setIconComponent(<Fontisto name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Foundation':
+        setIconComponent(<Foundation name={taskToEdit.icon} color={theme.colors.onBackground}   size={30}/>);
+        break;
+      case 'Ionicons':
+        setIconComponent(<Ionicons name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'MaterialCommunityIcons':
+        setIconComponent(<MaterialCommunityIcons name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'MaterialIcons':
+        setIconComponent(<MaterialIcons name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Octicons':
+        setIconComponent(<Octicons name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'SimpleLineIcons':
+        setIconComponent(<SimpleLineIcons name={taskToEdit.icon} color={theme.colors.onBackground}  size={30}/>);
+        break;
+      case 'Zocial':
+        setIconComponent(<Zocial name={taskToEdit.icon} color={theme.colors.onBackground} size={30}/>);
+        break;
+      default:
+        // Default to FontAwesome if the library is not recognized
+        setIconComponent(<Feather opacity={0} name="info" color={theme.colors.onBackground}  size={30}/>);
+    }
+    if (!taskToEdit.icon)
+    {
+      setIconComponent(<Feather opacity={0} name="info" color={theme.colors.onBackground}  size={30}/>);
+    }
+
+    setIcon(taskToEdit.icon);
+    setTaskColor(taskToEdit.taskColor);
+    setTaskFreq(taskToEdit.taskFreq);
+    toggleModal();
+  };
+  
+
   const deleteItem = (itemId, fadeAnim) => {
     fadeAnim && fadeAnim.stopAnimation();
 
     const updatedData = data.filter((item) => item.id !== itemId);
     setData(updatedData);
   };
+  
 
   
   const addTask = () => {
     if (newTask.trim() !== '') {
+      setEnableSwipe(true);
+      if (taskFreq == 'recurring' && daysNum == '')
+      {
+      Animated.sequence([
+        Animated.timing(shakeAnimationRecurring, { toValue: 10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimationRecurring, { toValue: -10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimationRecurring, { toValue: 10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeAnimationRecurring, { toValue: 0, duration: 50, useNativeDriver: true }),
+      ]).start();
+    }
+    else {
+
+
       const updatedData = [
         ...data,
-        {   id: uuid.v4(), text: newTask, checked: false, icon: icon, iconFamily: iconFamily, taskColor: taskColor, taskFreq: taskFreq, fadeAnim: new Animated.Value(1), taskDate: taskDate, daysNum: daysNum },
+        {   id: uuid.v4(), text: newTask, checked: false, checkedDay: new Date(), icon: icon, iconFamily: iconFamily, taskColor: taskColor, taskFreq: taskFreq, fadeAnim: new Animated.Value(1), taskDate: taskDate, daysNum: daysNum },
       ];
       setData(updatedData);
       setIcon('');
       setNewTask('');
-      setIconComponent(<Feather name="info" color={theme.colors.onBackground}  size={30}/>);
+      setIconComponent(<Feather opacity={0} name="info" color={theme.colors.onBackground}  size={30}/>);
       toggleModal();
     }
+  }
     else 
     {
       Animated.sequence([
@@ -293,6 +541,43 @@ export default function CheckList() {
       setTextInputColor('red');
     }
   };
+
+  const editTask = (itemId) => {
+    if (newTask.trim() !== '') {
+    const updatedData = data.map(task => {
+      if (task.id === itemId) {
+        // Update the properties of the edited task
+        return {
+          ...task,
+          text: newTask,
+          icon: icon,
+          iconFamily: iconFamily,
+          taskColor: taskColor,
+          taskFreq: taskFreq,
+          taskDate: taskDate,
+          daysNum: daysNum
+        };
+      }
+      return task; // Keep other tasks unchanged
+    });
+    setData(updatedData);
+    setIcon('');
+    setNewTask('');
+    setIconComponent(<Feather opacity={0} name="info" color={theme.colors.onBackground} size={30}/>);
+    toggleModal();
+  } else {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+
+    setTextInputColor('red');
+  }
+};
+
+
   
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -308,11 +593,15 @@ export default function CheckList() {
     setIsDragged(prevIsDragged => {
       if (prevIsDragged) {
         // If it was dragged, disable swipe
+        console.log("DAMN");
         setEnableSwipe(false);
         return false;
       }
       return prevIsDragged;
     });
+    setTimeout(() => {
+      setEnableSwipe(true);
+    }, 100); // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   };
   
   const handleDragStart = (item, index) => {
@@ -366,9 +655,14 @@ export default function CheckList() {
     setNewTask(text);
     setTextInputColor('gray');
   };
+  
+
+
 
   return (
     <Provider >
+      
+
         <View style={{marginTop: 50}}></View>
 <AutoDragSortableView 
 
@@ -385,7 +679,7 @@ onDataChange={(newData) => {
 
 }}
 isDragFreely={false}	
-delayLongPress={170}
+delayLongPress={165}
 dataSource={filteredData}
 parentWidth={parentWidth}
 childrenWidth={childrenWidth}
@@ -398,9 +692,12 @@ renderItem={(item, index, drag) => {
     if (item.taskFreq === 'recurring' && 
     differenceInDays(new Date(), item.taskDate) !== item.daysNum &&
     differenceInDays(new Date(), item.taskDate) % item.daysNum !== 0 &&
-    differenceInDays(new Date(), item.taskDate) !== 0) {
-  return null; // Do not render the item
-}
+    differenceInDays(new Date(), item.taskDate) !== 0) {return null;}
+
+    if (differenceInDays(new Date(), item.checkedDay) !== 0)
+    {
+      item.checked = false;
+    }
 
 const renderItemContent = (
         <Animated.View style={{marginLeft: 15, opacity: item.fadeAnim }}>
@@ -421,7 +718,7 @@ const renderItemContent = (
                       }, 500); // Adjust the delay to match the animation duration
                     } else {
                       const updatedData = data.map((dataItem) =>
-                        dataItem.id === item.id ? { ...dataItem, checked: isChecked } : dataItem
+                        dataItem.id === item.id ? { ...dataItem, checked: isChecked, checkedDay: new Date() } : dataItem
                       );
                       setData(updatedData);
                       console.log(updatedData);
@@ -431,7 +728,7 @@ const renderItemContent = (
               />
               <View style={{flex: 1}}></View>
               {/* {item.iconFamily}       */}
-              {renderIcon(item.icon, item.iconFamily, item.taskColor)}
+              {item.icon !== '' ? renderIcon(item.icon, item.iconFamily, item.taskColor) : null}
               {/* <Icon source={item.icon} color={'blue'} size={25} /> */}
                             
               <Text> </Text>
@@ -453,7 +750,7 @@ return (
   <Swipeable
     rightThreshold={60}
     leftThreshold={60}
-    renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, item, deleteItem)}
+    renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, item, editItem, deleteItem)}
     enabled={enableSwipe} // Pass the enableSwipe state to enable or disable swipe
   >
     {renderItemContent}
@@ -462,11 +759,50 @@ return (
 
 }}
 />
+{!filteredData.some(item => !item.checked) && (
+  <View style={{marginBottom: 50, alignItems: "center"}}>
+    {filteredData == "" && (
+      <React.Fragment>
+        <Text style={{color:theme.colors.text}}>
+          Add some tasks or complete your day
+        </Text>    
+        <Spacer height={20} />        
+      </React.Fragment>
+    )}
+    <ThemedButton onPress={() => {
+
+                if (differenceInDays(new Date(), currentStreakDate) == 1)
+                {
+                  console.log("Streak continued!");
+                  toggleCurrentStreakNum(currentStreakNum+1);
+                }
+                else if (differenceInDays(new Date(), currentStreakDate) > 1)
+                {
+                  toggleCurrentStreakNum(0);
+                  toggleActualStreakDate(currentStreakDate);
+                  console.log("Streak started!");
+                }
+                console.log(actualStreakDate);
+                toggleCurrentStreakDate(new Date());
+
+                modalVis = true;
+                setCompleteModalVisible(true);
+
+    }}
+    name="rick" type="primary">Complete Day!</ThemedButton>
+  </View>
+)}
+
+{/* toggleCurrentStreakNum(currentStreakNum+1);
+toggleCurrentStreakDate(new Date()); */}
+
 <View style={{marginTop: 70}}></View>
 
         <Portal>
         <Modal visible={isModalVisible} onDismiss={toggleModal} contentContainerStyle={[styles.modalContainer, {backgroundColor: theme.colors.surface}]}>
-            <Text style={[styles.modalTitle, {color: theme.colors.text}]}>Add New Task</Text>
+        <Text style={[styles.modalTitle, {color: theme.colors.text}]}>
+          {isEditing ? 'Edit' : 'Add New'} Task
+        </Text>
             <Animated.View style={{transform: [{ translateX: shakeAnimation }]}}>
             <TextInput
               style={[styles.input, { color: theme.colors.text, borderColor: textInputColor, }]}
@@ -474,6 +810,7 @@ return (
               placeholder="Task name..."
               value={newTask}
               onChangeText={handleTextChange} 
+              maxLength={23}
             />
             </Animated.View>
           <View style={{ marginLeft: 30, marginVertical: 10, flexDirection: "row", alignSelf: 'center', alignItems: 'center' }}>
@@ -514,7 +851,7 @@ return (
         ]}
       />    
             {taskFreq === 'recurring' && (
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: -20}}>
+      <Animated.View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: -20, transform: [{ translateX: shakeAnimationRecurring }]}}>
         <Text style={{color:theme.colors.text}}>
           The task will repeat every{'\u00A0'}
         </Text>
@@ -529,15 +866,21 @@ return (
         <Text style={{color:theme.colors.text}}>
         {'\u00A0'}days.
         </Text>
-      </View>
+      </Animated.View>
       )}
-            <Button mode="contained" onPress={addTask}>
-              Add
-            </Button>
+{isEditing ? (
+  <Button mode="contained" onPress={() => editTask(itemId)}>
+    Edit
+  </Button>
+) : (
+  <Button mode="contained" onPress={addTask}>
+    Add
+  </Button>
+)}
           </Modal>
           {showIconPicker && (
             <View style={{backgroundColor: theme.colors.background, height: '100%', }}>
-    <View style={{alignSelf: 'center', marginTop: 40, backgroundColor: theme.colors.background, width: '100%', marginBottom: 135}}>
+    <View style={{alignSelf: 'center', marginTop: 40, backgroundColor: theme.colors.background, width: '100%', marginBottom: 150}}>
     <IconPicker
       numColumns={6}
       iconSize={20}
@@ -549,9 +892,14 @@ return (
       flatListStyle={{ alignSelf: 'center'}}
       textInputStyle={{marginHorizontal: 10}}
     />
+<View style={{flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 100, marginTop: 20}}>
     <Button mode="contained" onPress={() => setShowIconPicker(false)} >
               Cancel
     </Button>
+    <Button mode="contained" onPress={() => {setIconComponent(<Feather opacity={0} name="info" color={theme.colors.onBackground}  size={30}/>); setIcon(''); setShowIconPicker(false);}} >
+              Clear
+    </Button>
+    </View>
     </View>
   </View>
   )}
@@ -586,8 +934,58 @@ return (
           style={styles.fab}
           mode="elevated" 
           icon="plus"
-          onPress={toggleModal}
-        />
+          onPress={() => {
+            setIsEditing(false);
+            setNewTask('');
+            setIconComponent(<Feather opacity={0} name="info" color={theme.colors.onBackground}  size={30}/>);
+            toggleModal();
+          }}        
+          />
+
+{modalVis && backupVis &&
+<Modal 
+  visible={true}  
+  onDismiss={() => setCompleteModalVisible(false)} 
+  contentContainerStyle={{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 0,
+  }}
+>
+  <View style={{
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    padding: 20,
+    width: width,
+    height: height,
+    borderRadius: 8,
+  }}>
+    <Text style={{color:theme.colors.text, fontFamily: "VarelaRound-Regular", fontSize: 30 }}>{randomText}</Text>             
+    <LottieView
+      source={require('./assets/Medal.json')}
+      style={{ width: 200, height: 200 }}
+      autoPlay={true}
+      loop={false}
+    />
+    <Text style={{color:theme.colors.text, fontFamily: "VarelaRound-Regular", fontSize: 18, marginVertical: 50 }}>You've finished all of your tasks today.</Text>             
+    <Text style={{color:theme.colors.text, fontFamily: "VarelaRound-Regular", fontSize: 18, marginVertical: 50 }}>Streak: {currentStreakNum+1}</Text>     
+
+          {/* <ConfettiCannon count={150} origin={{x: width / 2, y: height}} fadeOut explosionSpeed={900}/> */}
+
+
+    <ThemedButton onPress={() => {
+      modalVis = false;
+      setBackupVis(false);
+      setCompleteModalVisible(false); // Close the modal
+    }} name="rick" type="primary">
+      Nice!
+    </ThemedButton>
+          
+  </View>
+</Modal>
+}
     </Provider>
   );
 }
@@ -678,4 +1076,3 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
   }
   });
-  
